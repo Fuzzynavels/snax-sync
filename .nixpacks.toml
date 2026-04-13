@@ -1,5 +1,0 @@
-[phases.setup]
-nixPkgs = ["nodejs_24"]
-
-[start]
-cmd = "node sync.js"
