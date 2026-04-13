@@ -1,0 +1,4 @@
+sync-log.txt
+processed-orders.txt
+node_modules
+.env
