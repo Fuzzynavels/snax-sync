@@ -1,10 +1,10 @@
 const fs = require("fs");
 
-const SNAX_STORE_HASH = "yee976lw42";
-const SNAX_TOKEN = "4kyfodiytebf456mc1bs334gqwwak9h";
+const SNAX_STORE_HASH = process.env.SNAX_STORE_HASH;
+const SNAX_TOKEN = process.env.SNAX_TOKEN;
 
-const BESTBUDS_STORE_HASH = "woc2x07bqs";
-const BESTBUDS_TOKEN = "fqc4q2jznpdzblg3dpgxusjnynhv1qt";
+const BESTBUDS_STORE_HASH = process.env.BESTBUDS_STORE_HASH;
+const BESTBUDS_TOKEN = process.env.BESTBUDS_TOKEN;
 
 // Only sync these products
 const PREFIX = "SX-";
