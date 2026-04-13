@@ -16,21 +16,12 @@ function logMessage(message) {
 }
 
 function getProcessedOrders() {
-  if (!fs.existsSync("processed-orders.txt")) {
-    return new Set();
-  }
-
-  const content = fs.readFileSync("processed-orders.txt", "utf8");
-  return new Set(
-    content
-      .split("\n")
-      .map(line => line.trim())
-      .filter(Boolean)
-  );
+  // Temporary cloud-safe version
+  return new Set();
 }
 
 function markOrderProcessed(orderId) {
-  fs.appendFileSync("processed-orders.txt", `${orderId}\n`);
+  // Temporary cloud-safe version
 }
 
 async function fetchSnaxProducts() {
