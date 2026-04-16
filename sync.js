@@ -8,6 +8,7 @@ const BESTBUDS_TOKEN = process.env.BESTBUDS_TOKEN;
 
 // Only sync these products
 const PREFIX = "SX-";
+const MAX_ORDERS = 50;
 
 function logMessage(message) {
   const line = `${new Date().toISOString()} - ${message}`;
@@ -25,19 +26,28 @@ function markOrderProcessed(orderId) {
 }
 
 async function fetchSnaxProducts() {
-  const res = await fetch(
-    `https://api.bigcommerce.com/stores/${SNAX_STORE_HASH}/v3/catalog/products?limit=250`,
-    {
-      headers: {
-        "X-Auth-Token": SNAX_TOKEN,
-        "Content-Type": "application/json",
-        "Accept": "application/json"
-      }
+  const url = `https://api.bigcommerce.com/stores/${SNAX_STORE_HASH}/v3/catalog/products?limit=250`;
+
+  const res = await fetch(url, {
+    headers: {
+      "X-Auth-Token": SNAX_TOKEN,
+      "Content-Type": "application/json",
+      "Accept": "application/json"
     }
-  );
+  });
+
+  if (!res.ok) {
+    const errorText = await res.text();
+    throw new Error(`Failed to fetch SNAX products: ${res.status} ${res.statusText} - ${errorText}`);
+  }
 
   const data = await res.json();
-  return data.data || [];
+
+  if (!data || !Array.isArray(data.data)) {
+    throw new Error(`Unexpected SNAX response: ${JSON.stringify(data)}`);
+  }
+
+  return data.data;
 }
 
 async function fetchBestBudsProducts() {
@@ -57,6 +67,11 @@ async function fetchBestBudsProducts() {
       }
     );
 
+    if (!res.ok) {
+      const errorText = await res.text();
+      throw new Error(`Failed to fetch Best Buds products page ${page}: ${res.status} ${res.statusText} - ${errorText}`);
+    }
+
     const data = await res.json();
     const products = data.data || [];
 
@@ -74,7 +89,7 @@ async function fetchBestBudsProducts() {
 
 async function fetchRecentBestBudsOrders() {
   const res = await fetch(
-    `https://api.bigcommerce.com/stores/${BESTBUDS_STORE_HASH}/v2/orders?limit=50&sort=date_created:desc`,
+    `https://api.bigcommerce.com/stores/${BESTBUDS_STORE_HASH}/v2/orders?limit=${MAX_ORDERS}&sort=date_created:desc`,
     {
       headers: {
         "X-Auth-Token": BESTBUDS_TOKEN,
@@ -82,6 +97,11 @@ async function fetchRecentBestBudsOrders() {
       }
     }
   );
+
+  if (!res.ok) {
+    const errorText = await res.text();
+    throw new Error(`Failed to fetch recent Best Buds orders: ${res.status} ${res.statusText} - ${errorText}`);
+  }
 
   const data = await res.json();
   return data || [];
@@ -97,6 +117,11 @@ async function fetchOrderProducts(orderId) {
       }
     }
   );
+
+  if (!res.ok) {
+    const errorText = await res.text();
+    throw new Error(`Failed to fetch products for order ${orderId}: ${res.status} ${res.statusText} - ${errorText}`);
+  }
 
   const data = await res.json();
   return data || [];
@@ -195,9 +220,7 @@ async function processOrders(snaxProducts) {
       const currentInventory = Number(snaxMatch.inventory_level) || 0;
       const newInventory = Math.max(0, currentInventory - quantity);
 
-      logMessage(
-        `Reducing SNAX inventory for ${sku}: ${currentInventory} -> ${newInventory}`
-      );
+      logMessage(`Reducing SNAX inventory for ${sku}: ${currentInventory} -> ${newInventory}`);
 
       const success = await updateSnaxInventory(snaxMatch.id, newInventory);
 
@@ -243,9 +266,7 @@ async function syncSnaxToBestBuds(snaxProducts, bestBudsProducts) {
       continue;
     }
 
-    logMessage(
-      `Updating ${sku} - Best Buds: ${bestBudsInventory} -> SNAX: ${snaxInventory}`
-    );
+    logMessage(`Updating ${sku} - Best Buds: ${bestBudsInventory} -> SNAX: ${snaxInventory}`);
 
     const success = await updateBestBudsInventory(match.id, snaxInventory);
 
