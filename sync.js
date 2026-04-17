@@ -6,27 +6,48 @@ const SNAX_TOKEN = process.env.SNAX_TOKEN;
 const BESTBUDS_STORE_HASH = process.env.BESTBUDS_STORE_HASH;
 const BESTBUDS_TOKEN = process.env.BESTBUDS_TOKEN;
 
-logMessage(`SNAX_STORE_HASH: [${SNAX_STORE_HASH}]`);
-logMessage(`SNAX_TOKEN length: ${SNAX_TOKEN ? SNAX_TOKEN.length : 0}`);
-logMessage(`BESTBUDS_STORE_HASH: [${BESTBUDS_STORE_HASH}]`);
-
-// Only sync these products
+// Debug lines - remove later if you want
 const PREFIX = "SX-";
 const MAX_ORDERS = 50;
+const PROCESSED_ORDERS_FILE = "/data/processed-orders.txt";
+const LOG_FILE = "/data/sync-log.txt";
 
 function logMessage(message) {
   const line = `${new Date().toISOString()} - ${message}`;
   console.log(line);
-  fs.appendFileSync("sync-log.txt", line + "\n");
+
+  try {
+    fs.appendFileSync(LOG_FILE, line + "\n");
+  } catch (err) {
+    console.log(`Log write skipped: ${err.message}`);
+  }
 }
 
 function getProcessedOrders() {
-  // Temporary cloud-safe version
-  return new Set();
+  try {
+    if (!fs.existsSync(PROCESSED_ORDERS_FILE)) {
+      return new Set();
+    }
+
+    const content = fs.readFileSync(PROCESSED_ORDERS_FILE, "utf8");
+    return new Set(
+      content
+        .split("\n")
+        .map(line => line.trim())
+        .filter(Boolean)
+    );
+  } catch (err) {
+    logMessage(`Failed reading processed orders file: ${err.message}`);
+    return new Set();
+  }
 }
 
 function markOrderProcessed(orderId) {
-  // Temporary cloud-safe version
+  try {
+    fs.appendFileSync(PROCESSED_ORDERS_FILE, `${orderId}\n`);
+  } catch (err) {
+    logMessage(`Failed writing processed order ${orderId}: ${err.message}`);
+  }
 }
 
 async function fetchSnaxProducts() {
@@ -281,6 +302,9 @@ async function syncSnaxToBestBuds(snaxProducts, bestBudsProducts) {
 }
 
 async function runSync() {
+  logMessage(`SNAX_STORE_HASH: [${SNAX_STORE_HASH}]`);
+  logMessage(`SNAX_TOKEN length: ${SNAX_TOKEN ? SNAX_TOKEN.length : 0}`);
+  logMessage(`BESTBUDS_STORE_HASH: [${BESTBUDS_STORE_HASH}]`);
   logMessage("Starting sync...");
 
   const snaxProducts = await fetchSnaxProducts();
