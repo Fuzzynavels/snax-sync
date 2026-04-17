@@ -6,6 +6,10 @@ const SNAX_TOKEN = process.env.SNAX_TOKEN;
 const BESTBUDS_STORE_HASH = process.env.BESTBUDS_STORE_HASH;
 const BESTBUDS_TOKEN = process.env.BESTBUDS_TOKEN;
 
+logMessage(`SNAX_STORE_HASH: [${SNAX_STORE_HASH}]`);
+logMessage(`SNAX_TOKEN length: ${SNAX_TOKEN ? SNAX_TOKEN.length : 0}`);
+logMessage(`BESTBUDS_STORE_HASH: [${BESTBUDS_STORE_HASH}]`);
+
 // Only sync these products
 const PREFIX = "SX-";
 const MAX_ORDERS = 50;
